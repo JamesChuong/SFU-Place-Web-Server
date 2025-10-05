@@ -1,7 +1,11 @@
 from flask import Blueprint, request, jsonify
 from api import auth
-firebase_api = Blueprint('data', __name__)
+from firebase_admin import firestore
+import uuid
 
+firebase_api = Blueprint('firebase', __name__)
+
+db = firestore.client()
 
 @firebase_api.get("/")
 def get_data():
@@ -21,4 +25,22 @@ def get_user_data():
     }
 
     return jsonify(user_info)
+
+
+@firebase_api.post("/sign_up")
+def register_user():
+
+    uid = str(uuid.uuid4())
+
+    user_info = {
+        "name": request.json["name"],
+        "email": request.json["email"],
+        "uid": uid,
+    }
+
+    user_ref = db.collection("users").document(uid)
+
+    user_ref.set(user_info)
+
+    return jsonify(user_info), 201
 
