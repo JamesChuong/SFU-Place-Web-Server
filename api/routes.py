@@ -96,16 +96,9 @@ def add_surface():
 @firebase_api.post("/surface")
 @authentication.authenticate_token
 def add_surface_data():
-    surface_id = request.json["uid"]
-
-    surface_ref = f"surfaces/{surface_id}"
-
-    surface = realtime_db.reference(surface_ref).get()
-
-    if surface:
-
-        return jsonify({"error": "Surface already exists"}), 400
 
     data = request.get_json()
 
-    realtime_db.reference(surface_ref).set(data)
+    realtime_db.reference("surfaces").push(data)
+
+    return {data}, 201
