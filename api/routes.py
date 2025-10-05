@@ -1,18 +1,18 @@
 from flask import Blueprint, request, jsonify
 from api import authentication
-from firebase_admin import firestore, auth
+from firebase_admin import firestore, auth, db
 
 firebase_api = Blueprint('firebase', __name__)
 
-db = firestore.client()
-
+firestore_db = firestore.client()
+realtime_db = db
 
 @firebase_api.get("/")
 def get_data():
     return "Hello World"
 
 
-@firebase_api.get("/user_data")
+@firebase_api.get("/user")
 @authentication.authenticate_token
 def get_user_data():
 
@@ -20,7 +20,6 @@ def get_user_data():
         "uid": request.json["uid"],
         "name": request.json["name"],
         "email": request.json["email"],
-
     }
 
     return jsonify(user_info)
@@ -52,7 +51,7 @@ def register_user():
             "uid": user.uid,
         }
 
-        user_ref = db.collection("users").document(user.uid)
+        user_ref = firestore_db.collection("users").document(user.uid)
 
         user_ref.set(user_info)
 
@@ -63,7 +62,7 @@ def register_user():
         return jsonify({"error": str(e)}), 400
 
 
-@firebase_api.delete("/delete_user")
+@firebase_api.delete("/user/delete")
 @authentication.authenticate_token
 def delete_user():
 
@@ -76,3 +75,37 @@ def delete_user():
     except Exception as e:
 
         return jsonify({"error": str(e)}), 400
+
+
+@firebase_api.get("/surface")
+@authentication.authenticate_token
+def add_surface():
+
+    surface_id = request.json["uid"]
+    surface_ref = f"surfaces/{surface_id}"
+
+    surface = realtime_db.reference(surface_ref).get()
+
+    if not surface:
+
+        return jsonify({"error": "Surface not found"}), 400
+
+    return jsonify({"surface": surface}), 200
+
+
+@firebase_api.post("/surface")
+@authentication.authenticate_token
+def add_surface_data():
+    surface_id = request.json["uid"]
+
+    surface_ref = f"surfaces/{surface_id}"
+
+    surface = realtime_db.reference(surface_ref).get()
+
+    if surface:
+
+        return jsonify({"error": "Surface already exists"}), 400
+
+    data = request.get_json()
+
+    realtime_db.reference(surface_ref).set(data)
