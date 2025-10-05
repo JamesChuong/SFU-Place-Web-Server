@@ -1,11 +1,12 @@
 from flask import Blueprint, request, jsonify
-from api import authentication
+from api import authentication, utils
 from firebase_admin import firestore, auth, db
 
 firebase_api = Blueprint('firebase', __name__)
 
 firestore_db = firestore.client()
 realtime_db = db
+
 
 @firebase_api.get("/")
 def get_data():
@@ -66,7 +67,7 @@ def delete_user():
 
 @firebase_api.get("/surface/<surface_id>")
 @authentication.authenticate_token
-def add_surface(surface_id: str):
+def get_surface(surface_id: str):
 
     surface_ref = f"surfaces/{surface_id}"
 
@@ -76,7 +77,11 @@ def add_surface(surface_id: str):
 
         return jsonify({"error": "Surface not found"}), 400
 
-    return jsonify({"surface": surface}), 200
+    surface = {
+        "surface": [utils.dict_to_array({surface_id: surface})[0]]
+    }
+
+    return jsonify(surface), 200
 
 
 @firebase_api.get("/surface/all")
@@ -85,7 +90,11 @@ def get_all_surfaces():
 
     surfaces = realtime_db.reference("surfaces").get()
 
-    return jsonify({"surfaces": surfaces}), 200
+    surfaces = {
+        "surfaces": utils.dict_to_array(surfaces)
+    }
+
+    return jsonify(surfaces), 200
 
 
 @firebase_api.post("/surface")
@@ -103,7 +112,7 @@ def add_surface_data():
     return {"surface": data}, 201
 
 
-@firebase_api.get("/surface/<surface_id>strokes/user/<user_id>")
+@firebase_api.get("/surface/<surface_id>/user/<user_id>/strokes")
 @authentication.authenticate_token
 def get_user_strokes(surface_id: str, user_id: str):
 
@@ -114,7 +123,11 @@ def get_user_strokes(surface_id: str, user_id: str):
     if strokes is None:
         return {"error": "No strokes found"}, 404
 
-    return {"strokes": strokes}, 200
+    strokes = {
+        "strokes": utils.dict_to_array(strokes)
+    }
+
+    return jsonify(strokes), 200
 
 
 @firebase_api.post("/surface/strokes/user")
@@ -136,12 +149,11 @@ def add_strokes():
     stroke_ref.update({"uid": stroke_uid})
 
     # If the user hasn't painted on the surface yet
-    if user_ref.get() is None:
 
-        user_ref.update({
-            "name": user_name,
-            "uid": user_id
-        })
+    user_ref.update({
+        "name": user_name,
+        "uid": user_id
+    })
 
     # Return the stroke with its UID for return value
 
