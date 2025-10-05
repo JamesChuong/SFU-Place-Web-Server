@@ -55,7 +55,7 @@ def delete_user():
 
     try:
 
-        auth.delete_user(request.json["uid"])
+        auth.delete_user(request.json["user_id"])
 
         return jsonify({"success": True}), 200
 
@@ -64,11 +64,10 @@ def delete_user():
         return jsonify({"error": str(e)}), 400
 
 
-@firebase_api.get("/surface")
+@firebase_api.get("/surface/<surface_id>")
 @authentication.authenticate_token
-def add_surface():
+def add_surface(surface_id: str):
 
-    surface_id = request.json["uid"]
     surface_ref = f"surfaces/{surface_id}"
 
     surface = realtime_db.reference(surface_ref).get()
@@ -80,15 +79,28 @@ def add_surface():
     return jsonify({"surface": surface}), 200
 
 
+@firebase_api.get("/surface/all")
+# @authentication.authenticate_token
+def get_all_surfaces():
+
+    surfaces = realtime_db.reference("surfaces").get()
+
+    return jsonify({"surfaces": surfaces}), 200
+
+
 @firebase_api.post("/surface")
 @authentication.authenticate_token
 def add_surface_data():
 
     data = request.get_json()
 
-    realtime_db.reference("surfaces").push(data)
+    new_ref = realtime_db.reference("surfaces").push(data)
 
-    return {data}, 201
+    uid = new_ref.key
+
+    new_ref.update({"uid": uid})
+
+    return {"surface": data}, 201
 
 
 @firebase_api.get("/surface/<surface_id>strokes/user/<user_id>")
@@ -106,17 +118,38 @@ def get_user_strokes(surface_id: str, user_id: str):
 
 
 @firebase_api.post("/surface/strokes/user")
-@authentication.authenticate_token
+# @authentication.authenticate_token
 def add_strokes():
-
     data = request.get_json()
 
     surface_id = data.get("surface_id")
     user_id = data.get("user_id")
+    user_name = data.get("name")
     stroke = data.get("stroke")
 
-    ref = f"surfaces/{surface_id}/users/{user_id}/strokes"
+    user_ref = realtime_db.reference(f"surfaces/{surface_id}/users/{user_id}")
 
-    realtime_db.reference(ref).push(stroke)
+    # Will also append the user to the surface object, if not done already
+    stroke_ref = user_ref.child("strokes").push(stroke)
 
-    return jsonify(data), 201
+    stroke_uid = stroke_ref.key
+    stroke_ref.update({"uid": stroke_uid})
+
+    # If the user hasn't painted on the surface yet
+    if user_ref.get() is None:
+
+        user_ref.update({
+            "name": user_name,
+            "uid": user_id
+        })
+
+    # Return the stroke with its UID for return value
+
+    stroke["uid"] = stroke_uid
+
+    return jsonify({
+        "surface_id": surface_id,
+        "user_id": user_id,
+        "name": user_name,
+        "stroke": stroke
+    }), 201
