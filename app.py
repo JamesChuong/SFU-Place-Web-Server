@@ -14,5 +14,5 @@ app.config["DEBUG"] = bool(os.getenv("DEBUG"))
 
 app.register_blueprint(routes.firebase_api)
 
-if __name__ == '__main__':
-    app.run()
+# if __name__ == '__main__':
+#     app.run()
