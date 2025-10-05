@@ -61,3 +61,18 @@ def register_user():
     except Exception as e:
 
         return jsonify({"error": str(e)}), 400
+
+
+@firebase_api.delete("/delete_user")
+@authentication.authenticate_token
+def delete_user():
+
+    try:
+
+        auth.delete_user(request.json["uid"])
+
+        return jsonify({"success": True}), 200
+
+    except Exception as e:
+
+        return jsonify({"error": str(e)}), 400
