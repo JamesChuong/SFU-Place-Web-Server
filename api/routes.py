@@ -12,19 +12,6 @@ def get_data():
     return "Hello World"
 
 
-@firebase_api.get("/user")
-@authentication.authenticate_token
-def get_user_data():
-
-    user_info = {
-        "uid": request.json["uid"],
-        "name": request.json["name"],
-        "email": request.json["email"],
-    }
-
-    return jsonify(user_info)
-
-
 @firebase_api.post("/register")
 def register_user():
 
@@ -102,3 +89,34 @@ def add_surface_data():
     realtime_db.reference("surfaces").push(data)
 
     return {data}, 201
+
+
+@firebase_api.get("/surface/<surface_id>strokes/user/<user_id>")
+@authentication.authenticate_token
+def get_user_strokes(surface_id: str, user_id: str):
+
+    user_ref = f"surfaces/{surface_id}/users/{user_id}/strokes"
+
+    strokes = realtime_db.reference(user_ref).get()
+
+    if strokes is None:
+        return {"error": "No strokes found"}, 404
+
+    return {"strokes": strokes}, 200
+
+
+@firebase_api.post("/surface/strokes/user")
+@authentication.authenticate_token
+def add_strokes():
+
+    data = request.get_json()
+
+    surface_id = data.get("surface_id")
+    user_id = data.get("user_id")
+    stroke = data.get("stroke")
+
+    ref = f"surfaces/{surface_id}/users/{user_id}/strokes"
+
+    realtime_db.reference(ref).push(stroke)
+
+    return jsonify(data), 201
