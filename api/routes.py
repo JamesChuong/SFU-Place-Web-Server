@@ -80,7 +80,7 @@ def add_surface(surface_id: str):
 
 
 @firebase_api.get("/surface/all")
-# @authentication.authenticate_token
+@authentication.authenticate_token
 def get_all_surfaces():
 
     surfaces = realtime_db.reference("surfaces").get()
@@ -118,7 +118,7 @@ def get_user_strokes(surface_id: str, user_id: str):
 
 
 @firebase_api.post("/surface/strokes/user")
-# @authentication.authenticate_token
+@authentication.authenticate_token
 def add_strokes():
     data = request.get_json()
 
