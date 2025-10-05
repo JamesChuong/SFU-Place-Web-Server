@@ -20,7 +20,7 @@ def authenticate_token(f):
 
         if not token:
 
-            return jsonify({'message': 'No ID Token Found'}), 401
+            return jsonify({'error': 'No ID Token Found'}), 401
 
         try:
 
@@ -29,7 +29,7 @@ def authenticate_token(f):
 
         except Exception as e:
 
-            return jsonify({'message': str(e)}), 401
+            return jsonify({'error': str(e)}), 401
 
         return f(*args, **kwargs)
 
