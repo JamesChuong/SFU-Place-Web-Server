@@ -51,7 +51,7 @@ def register_user():
 
 
 @firebase_api.delete("/user/delete")
-@authentication.authenticate_token
+# @authentication.authenticate_token
 def delete_user():
 
     try:
@@ -66,7 +66,7 @@ def delete_user():
 
 
 @firebase_api.get("/surface/<surface_id>")
-@authentication.authenticate_token
+# @authentication.authenticate_token
 def get_surface(surface_id: str):
 
     surface_ref = f"surfaces/{surface_id}"
@@ -85,7 +85,7 @@ def get_surface(surface_id: str):
 
 
 @firebase_api.get("/surface/all")
-@authentication.authenticate_token
+# @authentication.authenticate_token
 def get_all_surfaces():
 
     surfaces = realtime_db.reference("surfaces").get()
@@ -98,7 +98,7 @@ def get_all_surfaces():
 
 
 @firebase_api.post("/surface")
-@authentication.authenticate_token
+# @authentication.authenticate_token
 def add_surface_data():
 
     data = request.get_json()
@@ -113,7 +113,7 @@ def add_surface_data():
 
 
 @firebase_api.get("/surface/<surface_id>/user/<user_id>/strokes")
-@authentication.authenticate_token
+# @authentication.authenticate_token
 def get_user_strokes(surface_id: str, user_id: str):
 
     user_ref = f"surfaces/{surface_id}/users/{user_id}/strokes"
@@ -131,7 +131,7 @@ def get_user_strokes(surface_id: str, user_id: str):
 
 
 @firebase_api.post("/surface/strokes/user")
-@authentication.authenticate_token
+# @authentication.authenticate_token
 def add_strokes():
     data = request.get_json()
 
